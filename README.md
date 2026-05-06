@@ -1,68 +1,40 @@
 # silver-mesh-lease-mesh
 
-`silver-mesh-lease-mesh` explores distributed systems in SQL. The repository keeps the core rule set compact, then surrounds it with examples that show how the decisions move.
+`silver-mesh-lease-mesh` explores distributed systems with a small SQL codebase and local fixtures. The technical goal is to implement an SQL distributed systems project for lease storage recovery, using log and snapshot fixtures and replay consistency checks.
 
-## Silver Mesh Lease Mesh Notes
+## Reason For The Project
 
-The quickest review path is the verifier first, then the fixtures, then the operations note. That order makes it easy to see whether the code, data, and explanation still agree.
+The project exists to keep a narrow engineering decision visible and testable. For this repo, that decision is how quorum health and replica lag should influence a review result.
 
-## Implementation Notes
+## Silver Mesh Lease Mesh Review Notes
 
-The design is intentionally direct: parse or construct a signal, score it, classify it, and verify the expected branch. This makes the repository useful for studying distributed systems behavior without needing a service or database unless the language project itself is SQL. The SQL project uses sqlite fixtures, views, and assertions to keep query behavior inspectable.
+The first comparison I would make is `lease drift` against `quorum health` because it shows where the rule is most opinionated.
 
-## Why This Exists
+## What It Does
 
-This project keeps the domain idea close to the tests. That makes it useful as a reference implementation, a small experiment, or a starting point for a more specialized tool.
+- `fixtures/domain_review.csv` adds cases for quorum health and lease drift.
+- `metadata/domain-review.json` records the same cases in structured form.
+- `config/review-profile.json` captures the read order and the two review questions.
+- `examples/silver-mesh-lease-walkthrough.md` walks through the case spread.
+- The SQL code includes a review path for `lease drift` and `quorum health`.
+- `docs/field-notes.md` explains the strongest and weakest cases.
 
-## Feature Notes
+## How It Is Put Together
 
-- Uses fixture data to keep quorum behavior changes visible in code review.
-- Includes extended examples for lease timing, including `surge` and `degraded`.
-- Documents message ordering tradeoffs in `docs/operations.md`.
-- Runs locally with a single verification command and no external credentials.
-- Stores project constants and verification metadata in `metadata/project.json`.
+The core code exposes a scoring path and the added review layer uses `signal`, `slack`, `drag`, and `confidence`. The domain terms are `quorum health`, `lease drift`, `replica lag`, and `membership churn`.
 
-## Example Scenarios
+The SQL checks add a separate view over the domain review fixture.
 
-`examples/extended_cases.csv` adds six named cases. I kept the names plain so failures are easy to read in a terminal: baseline, pressure, surge, degraded, recovery, and boundary.
-
-## Code Tour
-
-- `tests`: verification harness
-- `fixtures`: compact golden scenarios
-- `examples`: expanded scenario set
-- `metadata`: project constants and verification metadata
-- `docs`: operations and extension notes
-- `scripts`: local verification and audit commands
-- `schema.sql`: sqlite schema and view definitions
-
-## Local Setup
-
-Use a normal shell with SQL available on `PATH`. The verifier is written as a PowerShell script because the portfolio was assembled on Windows.
-
-## Try It
+## Run It
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify.ps1
 ```
 
-This runs the language-level build or test path against the compact fixture set.
+## Check It
 
-## Tests
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/audit.ps1
-```
-
-The audit command checks repository structure and README constraints before it delegates to the verifier.
+That command is also the regression path. It verifies the domain cases and catches mismatches between the CSV, metadata, and code.
 
 ## Boundaries
 
-The repository favors determinism over breadth. It does not pull live data, keep secrets, or depend on network access for verification.
-
-## Roadmap
-
-- Add a short report command that prints the score breakdown for a single scenario.
-- Add malformed input fixtures so the failure path is as visible as the happy path.
-- Split the scoring constants into a typed configuration object and validate it before use.
-- Add one more distributed systems fixture that focuses on a malformed or borderline input.
+The repository is intentionally scoped to local checks. I would expand it by adding adversarial fixtures before adding features.
